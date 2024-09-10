@@ -1,8 +1,0 @@
-﻿  GameManager.cpp
-D:\GitHubProjects\DarknessVoidConsole\GameManager.cpp(63,28): warning C4129: '=': unrecognized character escape sequence
-  Generating code
-  5 of 689 functions ( 0.7%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    24 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  DarknessVoidConsole.vcxproj -> D:\GitHubProjects\DarknessVoidConsole\x64\Release\DarknessVoidConsole.exe
