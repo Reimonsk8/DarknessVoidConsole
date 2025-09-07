@@ -27,12 +27,9 @@ protected:
 	int mType; //enum weapon, wearable or consumable
 	std::string mRarity; //common, rare or legendary
 
-    //REVIEW [VAR][NAME][Karla]: 'm' prefix for private/protected member variables.
-	int randomValue;
-
-    //REVIEW [VAR][NAME][Karla]: Variable should be named mGainedAttackPoints instead of commenting what it is.
-	int mAP;//atack points gained by equipment
-	int mMaxHP;//max health gained by equipment
+	int mRandomValue;
+	int mAP; //attack points gained by equipment
+	int mMaxHP; //max health gained by equipment
 	
 };
 

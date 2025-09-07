@@ -2,6 +2,7 @@
 #include "Potion.h"
 #include "Graphics.h"
 #include "Equipment.h"
+#include "Constants.h"
 #include <iostream>
 #include <string>
 #include <time.h>
@@ -12,9 +13,9 @@ Potion::Potion(std::string name, int ap, int maxhp, bool fixed) : Equipment(name
 	mType = T_Consumable;
 	if (!fixed)	//increase AP & maxHP based on type and rarity
 	{
-		mMaxHP = mMaxHP + (2 * randomValue)+ (5 * (randomValue / 3));
+		mMaxHP = mMaxHP + (2 * mRandomValue)+ (5 * (mRandomValue / 3));
 		if (!(mRarity == "common"))
-			mAP = mAP + (1 * randomValue / 4);
+			mAP = mAP + (1 * mRandomValue / 4);
 	}
 };
 
@@ -35,7 +36,7 @@ void Potion::pickPotion(Potion *current, Character &hero, int code)
 		std::cout << "Potion taken" << std::endl;
 		hero.addToInventory(*current);
 		lvl.grid[hero.heroRow][hero.heroCol] = 'O';
-		Sleep(500);
+		Sleep(Timing::UI_DELAY_MS);
 		drawScreen(hero, true);
 	}
 }
@@ -47,7 +48,7 @@ void Potion::usePotion(Character &hero, int code)
 	if (hero.inventorySize() <= 3)// if no potions
 	{
 		std::cout << "so dumb, you forgot that you dont have any potions left" << std::endl;
-		Sleep(1000);
+			Sleep(Timing::SOUND_DELAY_MS);
 	}
 	else
 	{
@@ -60,10 +61,21 @@ void Potion::usePotion(Character &hero, int code)
 				inputNum = (code - 48);
 			else //input by text
 			{
-				if (gInstructions)
-					std::cout << "input the number of potions you want to use" << std::endl;
-				std::cout << "select & enter potion number: " << std::endl;
-				std::cin >> inputNum;
+				bool validPotionInput = false;
+				while (!validPotionInput) {
+					if (gInstructions)
+						std::cout << "input the number of potions you want to use" << std::endl;
+					std::cout << "select & enter potion number: " << std::endl;
+					std::cin >> inputNum;
+					
+					if (inputNum >= 1 && inputNum <= 5 && 
+						(inputNum + 2) < hero.inventorySize() &&
+						hero.selectItem(inputNum + 2).getType() == T_Consumable) {
+						validPotionInput = true;
+					} else {
+						std::cout << "Invalid potion number! Please enter 1-5 for available potions." << std::endl;
+					}
+				}
 			}
 			if ((inputNum + 3) <= hero.inventorySize() && (inputNum + 3) >= 4)//validate potion number
 			{
@@ -81,12 +93,12 @@ void Potion::usePotion(Character &hero, int code)
 				SetConsoleTextAttribute(hConsole, C_White);
 				hero.removeFromInventory(inputNum + 2);
 				potionUsed = true;
-				Sleep(2000);
+				Sleep(Timing::POTION_DELAY_MS);
 			}
 			else
 			{
 				std::cout << "wrong input try again (press i fron instructions)" << std::endl;
-				Sleep(500);
+				Sleep(Timing::UI_DELAY_MS);
 			}
 		}
 	}

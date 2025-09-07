@@ -29,7 +29,7 @@ public:
 	void setAP(int ap);
 	int getAP();
 
-	int inventorySize();
+	int inventorySize() const;
 	virtual void addToInventory(Equipment &item);
 	Equipment selectItem(int index);
 	void removeFromInventory(int index);

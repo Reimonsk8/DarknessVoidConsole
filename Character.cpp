@@ -59,9 +59,9 @@ int Character::getAP()
 	return mAP;
 };
 
-int Character::inventorySize()
+int Character::inventorySize() const
 {
-	return mInventory.size();
+	return static_cast<int>(mInventory.size());
 }
 
 void Character::addToInventory(Equipment &item)
@@ -70,8 +70,10 @@ void Character::addToInventory(Equipment &item)
 	{
 		if (mInventory.empty())
 			mInventory.push_back(item);
-		else
+		else if (T_Head < mInventory.size())
 			mInventory[T_Head] = item;
+		else
+			mInventory.push_back(item);
 		std::cout << "item: " << item.getName() << " added to inventory" << std::endl;
 		PlaySound(TEXT("./Sounds/item.wav"), NULL, SND_SYNC);
 		item.posX = OUT_OF_RANGE;
@@ -81,8 +83,10 @@ void Character::addToInventory(Equipment &item)
 	{
 		if (mInventory.size() <= T_Chest)
 			mInventory.push_back(item);
-		else
+		else if (T_Chest < mInventory.size())
 			mInventory[T_Chest] = item;
+		else
+			mInventory.push_back(item);
 		std::cout << "item: " << item.getName() << " added to inventory" << std::endl;
 		PlaySound(TEXT("./Sounds/item.wav"), NULL, SND_SYNC);
 		item.posX = OUT_OF_RANGE;
@@ -92,8 +96,10 @@ void Character::addToInventory(Equipment &item)
 	{
 		if (mInventory.size() <= T_Weapon)
 			mInventory.push_back(item);
-		else
+		else if (T_Weapon < mInventory.size())
 			mInventory[T_Weapon] = item;
+		else
+			mInventory.push_back(item);
 		std::cout << "item: " << item.getName() << " added to inventory" << std::endl;
 		PlaySound(TEXT("./Sounds/item.wav"), NULL, SND_SYNC);
 		item.posX = OUT_OF_RANGE;
@@ -119,8 +125,11 @@ void Character::calculateStats()
 	int sumAP=0;
 	for (int item = 0; item <= T_Weapon; ++item)
 	{
-		sumMaxHP = sumMaxHP + mInventory[item].getMaxHP();
-		sumAP = sumAP + mInventory[item].getAP();
+		// Check bounds before accessing inventory
+		if (item < mInventory.size()) {
+			sumMaxHP = sumMaxHP + mInventory[item].getMaxHP();
+			sumAP = sumAP + mInventory[item].getAP();
+		}
 	}
 	mMaxHP = mBaseMaxHP + sumMaxHP;
 	mAP = mBaseAP + sumAP ;
@@ -131,7 +140,12 @@ void Character::calculateStats()
 
 Equipment Character::selectItem(int index)
 {
-	return mInventory[index];
+	// Check bounds before accessing inventory
+	if (index >= 0 && index < mInventory.size()) {
+		return mInventory[index];
+	}
+	// Return a default empty equipment if index is out of bounds
+	return Equipment("", 0, 0, true);
 };
 
 void Character::removeFromInventory(int index)

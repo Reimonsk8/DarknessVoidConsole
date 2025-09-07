@@ -1,4 +1,5 @@
 #include "Equipment.h"
+#include "Constants.h"
 //#include "common.h"
 #include <iostream>
 #include <string>
@@ -11,18 +12,20 @@ Equipment::Equipment(std::string name, int ap, int maxhp, bool fixed)
 	{
 		mName = "          " + name;
 		mRarity = "common";
-		randomValue = 1;
+		mRandomValue = 1;
 	}
 	else //generate random rarity
 	{
-        //REVIEW [CTRLS][CONVENTION][Karla]: if-else statements' body must be enclosed by curly braces, even if they are one-liners.
-		randomValue = rand() % 13 + 1;
-		if (randomValue >= 12)
+		mRandomValue = rand() % Random::RARITY_CHANCE_MAX + 1;
+		if (mRandomValue >= Random::RARITY_LEGENDARY_THRESHOLD) {
 			mRarity = "legendary ";
-		else if (randomValue >= 8)
+		}
+		else if (mRandomValue >= Random::RARITY_RARE_THRESHOLD) {
 			mRarity = "rare      ";
-		else
+		}
+		else {
 			mRarity = "common";
+		}
 
 		if (!(mRarity == "common"))
 			mName = mRarity + name;

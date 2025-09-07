@@ -53,10 +53,52 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="x64\input.txt">
+    <Text Include="input.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="x64\input2.txt">
+    <Text Include="input2.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\bat.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\centaur.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\demon.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\dragon.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\gameover.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\gameoverblood.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\ghost.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\gryphon.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\minotaur.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\reaper.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\skeleton.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\title.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\troll.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="Graphics\victory.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>
@@ -94,5 +136,65 @@
     <ClInclude Include="Weapon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DarknessVoidConsole.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\gameoverblood2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="Sounds\battle.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\begin.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\cancel.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\chest.mp3">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\claw.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\death.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\flee.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\gameover.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\hit.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\intro.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\item.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\powerup.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\step.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\victory.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Sounds\win.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>

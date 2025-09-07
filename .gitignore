@@ -1,3 +1,94 @@
-#build
-/x64
-/.vs
+# Visual Studio / Visual C++ Build Outputs
+*.exe
+*.dll
+*.so
+*.dylib
+*.obj
+*.o
+*.a
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.log
+*.tlog
+*.lastbuildstate
+*.recipe
+*.iobj
+*.ipdb
+*.vcxproj.user
+*.aps
+*.res
+*.rc
+
+# Visual Studio Directories
+Debug/
+alpha/
+Release/
+x64/
+x86/
+Win32/
+.vs/
+.vscode/
+Darkness.32270abc/
+
+# Build Artifacts
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Temporary Files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Game Assets (if you want to exclude them)
+# Uncomment these if you don't want to track game assets
+# Graphics/
+# Sounds/
+# *.txt
+# *.wav
+# *.mp3
+
+# Backup Files
+*.bak
+*.backup
+*.old
+
+# IDE Files
+*.ncb
+*.aps
+*.plg
+*.opt
+*.clw
+*.tags
+*.VC.db
+*.VC.VC.opendb
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.deb
+*.pkg
+*.dmg

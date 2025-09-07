@@ -8,7 +8,7 @@
 Generator::Generator()
 	:weapons(0), helmets(0), armors(0), potions(0), enemies(0)
 {
-	srand(time(0));
+	srand(static_cast<unsigned int>(time(0)));
 
 	for (int i = 0; i < 16; i++)
 		listEnemies.push_back(Enemy("skeleton", 10, 50, 6));//name,AP,maxHP, flee
@@ -41,14 +41,13 @@ Generator::Generator()
 		listHelmets.push_back(Helmet("templar helmet  \t  [-+-]   ", 0, 5));
 		listHelmets.push_back(Helmet("straight helmet \t  |---|   ", 0, 6));
 		listHelmets.push_back(Helmet("dragon  mask    \t VowoV    ", 0, 7));
-		char h2 = 209; // special char ╤
+		char h2 = static_cast<char>(209); // special char ╤
 
-		//REVIEW [VAR][CONVENTION][Karla]: One variable per line.
 		std::string h1 = "|", h3 = "T", h4 = "|   ", helm = h1 + h2 + h3 + h2 + h4;
 		listHelmets.push_back(Helmet("barbute helmet  \t  " + helm, 0, 8));
-		h1 = 247; // special char §
-		h3 = 157; // special char ¥
-		h2 = 215; // special char ¤
+		h1 = static_cast<char>(247); // special char §
+		h3 = static_cast<char>(157); // special char ¥
+		h2 = static_cast<char>(215); // special char ¤
 		h4 = "   ", helm = h1 + h2 + h3 + h2 + h1 + h4;
 		listHelmets.push_back(Helmet("evil dark helm  \t  " + helm, -15, 55));
 
@@ -58,14 +57,14 @@ Generator::Generator()
 	for (int i = 0; i < 2; i++)//generate armors
 	{
 		listArmors.push_back(Armor("cloth shirt      \t /|__|\\   ", 0, 1));
-		listArmors.push_back(Armor("stripped armor   \t /\|||\\   ", 0, 2));
+		listArmors.push_back(Armor("stripped armor   \t /\\|||\\   ", 0, 2));
 		listArmors.push_back(Armor("chainmail        \t /{###}\\  ", 0, 3));
 		listArmors.push_back(Armor("magician robe    \t /%~&~%\\  ", 0, 4));
 		listArmors.push_back(Armor("mithrill armor   \t /\\ | /\\  ", 0, 6));
 		listArmors.push_back(Armor("brigadine armor  \t /\\~T~/\\  ", 0, 8));
 		listArmors.push_back(Armor("dragon slayer set\t />>V<<\\  ", 0, 10));
-		char a3 = 232; // special char Φ
-		char a2 = 178; // special char ▓
+		char a3 = static_cast<char>(232); // special char Φ
+		char a2 = static_cast<char>(178); // special char ▓
 		std::string a1 = "/\\", a4 = "/\\  ", armor = a1 + a2 + a3 + a2 + a4;
 		listArmors.push_back(Armor("evil cursed armor\t " + armor, 100, -100));
 	}
@@ -150,7 +149,7 @@ void Generator::SpawnInMap()
 	int mapValue;
 	for (int row = 0; row < gHeight; ++row)//count items to generate
 	{
-		for (int col = 0; col < gHeight; ++col)
+		for (int col = 0; col < gWidth; ++col)
 		{
 
 			mapValue = lvl.grid[row][col];

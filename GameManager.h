@@ -6,16 +6,27 @@
 class GameManager
 {
 public:
+	// Constructor
+	GameManager();
+	
+	// Instance methods
+	void readFiles();
+	void startMenu(Character &hero);
+	int decode(int code);
+	void handleInput(Character &hero, Generator &generated);
+	void handleEvent(Character &hero, Generator &generated, const int code);
 
-	static void readFiles();
+	// Input validation helper functions
+	bool isValidBattleInput(const std::string& input);
+	bool isValidPotionInput(int inputNum, const Character& hero);
+	
+	// Singleton access
+	static GameManager& getInstance();
 
-	static void startMenu(Character &hero);
-
-	static int decode(int code);
-
-	static void handleInput(Character &hero, Generator &generated);
-
-	static void handleEvent(Character &hero, Generator &generated, const int code);
-
+private:
+	// Private constructor for singleton
+	GameManager(const GameManager&) = delete;
+	GameManager& operator=(const GameManager&) = delete;
 };
+
 #endif //GAMEMANAGER_H

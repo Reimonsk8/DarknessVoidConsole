@@ -134,6 +134,7 @@
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Equipment.cpp" />
     <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="GameState.cpp" />
     <ClCompile Include="Generator.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="Helmet.cpp" />
@@ -142,21 +143,61 @@
     <ClCompile Include="Weapon.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="x64\input.txt" />
-    <Text Include="x64\input2.txt" />
+    <Text Include="Graphics\bat.txt" />
+    <Text Include="Graphics\centaur.txt" />
+    <Text Include="Graphics\demon.txt" />
+    <Text Include="Graphics\dragon.txt" />
+    <Text Include="Graphics\gameover.txt" />
+    <Text Include="Graphics\gameoverblood.txt" />
+    <Text Include="Graphics\ghost.txt" />
+    <Text Include="Graphics\gryphon.txt" />
+    <Text Include="Graphics\minotaur.txt" />
+    <Text Include="Graphics\reaper.txt" />
+    <Text Include="Graphics\skeleton.txt" />
+    <Text Include="Graphics\title.txt" />
+    <Text Include="Graphics\troll.txt" />
+    <Text Include="Graphics\victory.txt" />
+    <Text Include="input.txt" />
+    <Text Include="input2.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Armor.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Constants.h" />
     <ClInclude Include="Equipment.h" />
     <ClInclude Include="GameManager.h" />
+    <ClInclude Include="GameState.h" />
     <ClInclude Include="Generator.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="Helmet.h" />
     <ClInclude Include="Potion.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Weapon.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DarknessVoidConsole.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\gameoverblood2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="Sounds\battle.wav" />
+    <Media Include="Sounds\begin.wav" />
+    <Media Include="Sounds\cancel.wav" />
+    <Media Include="Sounds\chest.mp3" />
+    <Media Include="Sounds\claw.wav" />
+    <Media Include="Sounds\death.wav" />
+    <Media Include="Sounds\flee.wav" />
+    <Media Include="Sounds\gameover.wav" />
+    <Media Include="Sounds\hit.wav" />
+    <Media Include="Sounds\intro.wav" />
+    <Media Include="Sounds\item.wav" />
+    <Media Include="Sounds\powerup.wav" />
+    <Media Include="Sounds\step.wav" />
+    <Media Include="Sounds\victory.wav" />
+    <Media Include="Sounds\win.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

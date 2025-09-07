@@ -2,6 +2,7 @@
 #include "Equipment.h"
 #include "graphics.h"
 #include "common.h"
+#include "Constants.h"
 #include <iostream>
 #include <string>
 #include <time.h>
@@ -12,9 +13,9 @@ Armor::Armor(std::string name, int ap, int maxhp, bool fixed) : Equipment(name, 
 	mType = T_Chest;
 	if (!fixed)	//increase AP & maxHP based on type and rarity
 	{
-		mMaxHP = mMaxHP + ((randomValue * 2) + (10 * (randomValue / 4)));
+		mMaxHP = mMaxHP + ((mRandomValue * 2) + (10 * (mRandomValue / 4)));
 		if (!(mRarity == "common"))
-			mAP = mAP + (3 * randomValue / 6);
+			mAP = mAP + (3 * mRandomValue / 6);
 	}
 	
 };
@@ -33,7 +34,7 @@ void Armor::pickArmor(Armor *current, Character &hero, int code)
 		std::cout << "Armor taken" << std::endl;
 		hero.addToInventory(*current);
 		lvl.grid[hero.heroRow][hero.heroCol] = 'O';
-		Sleep(500);
+		Sleep(Timing::UI_DELAY_MS);
 		drawScreen(hero, true);
 	}
 	//delete current;

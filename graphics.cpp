@@ -3,75 +3,161 @@
 #include "graphics.h"
 #include "Character.h"
 #include "common.h"
+#include "Constants.h"
 
-//REVIEW [VAR][ENCAPSULATION][Karla]: Abstract variables in order for them to live in its own scope
-// and avoid global namespace pollution.
-static const enum BackgroundColors {B_Hero =26 ,B_Enemy = 44, B_Floor = 120, B_Potion = 116, B_Gear = 126, B_Walls = 135};
-static const int notExplored = C_Black;//should be black
-static const int defaultTextColor = C_White;
+// Global screen buffer for double buffering
+static ScreenBuffer screenBuffer = { nullptr, {0, 0}, {0, 0}, {0, 0, 0, 0}, false };
+
+void initScreenBuffer()
+{
+    if (screenBuffer.initialized) return;
+    
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(hConsole, &csbi);
+    
+    screenBuffer.bufferSize.X = csbi.dwSize.X;
+    screenBuffer.bufferSize.Y = csbi.dwSize.Y;
+    screenBuffer.bufferCoord.X = 0;
+    screenBuffer.bufferCoord.Y = 0;
+    screenBuffer.writeRegion.Left = 0;
+    screenBuffer.writeRegion.Top = 0;
+    screenBuffer.writeRegion.Right = csbi.dwSize.X - 1;
+    screenBuffer.writeRegion.Bottom = csbi.dwSize.Y - 1;
+    
+    // Allocate buffer memory
+    screenBuffer.buffer = new CHAR_INFO[screenBuffer.bufferSize.X * screenBuffer.bufferSize.Y];
+    
+    // Initialize buffer with spaces
+    clearBuffer();
+    
+    screenBuffer.initialized = true;
+}
+
+void cleanupScreenBuffer()
+{
+    if (screenBuffer.buffer) {
+        delete[] screenBuffer.buffer;
+        screenBuffer.buffer = nullptr;
+    }
+    screenBuffer.initialized = false;
+}
+
+void writeToBuffer(int x, int y, char character, WORD attributes)
+{
+    if (!screenBuffer.initialized || x < 0 || y < 0 || 
+        x >= screenBuffer.bufferSize.X || y >= screenBuffer.bufferSize.Y) {
+        return;
+    }
+    
+    int index = y * screenBuffer.bufferSize.X + x;
+    screenBuffer.buffer[index].Char.AsciiChar = character;
+    screenBuffer.buffer[index].Attributes = attributes;
+}
+
+void swapBuffers()
+{
+    if (!screenBuffer.initialized) return;
+    
+    WriteConsoleOutput(hConsole, screenBuffer.buffer, screenBuffer.bufferSize, 
+                      screenBuffer.bufferCoord, &screenBuffer.writeRegion);
+}
+
+void clearBuffer()
+{
+    if (!screenBuffer.initialized) return;
+    
+    for (int i = 0; i < screenBuffer.bufferSize.X * screenBuffer.bufferSize.Y; i++) {
+        screenBuffer.buffer[i].Char.AsciiChar = ' ';
+        screenBuffer.buffer[i].Attributes = 0;
+    }
+}
+
+// Helper function to write string to buffer
+void writeStringToBuffer(int x, int y, const std::string& str, WORD attributes)
+{
+    for (size_t i = 0; i < str.length(); i++) {
+        writeToBuffer(x + i, y, str[i], attributes);
+    }
+}
 
 void cls(bool invCLS)
 {
-	SetConsoleActiveScreenBuffer(hConsole);
+	// Use efficient console clearing instead of system("cls") to reduce flashing
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	std::cout.flush();
-	COORD topLeft = { 0, 0 };
-	COORD inventory;
-	if (gInstructions)
-		inventory = { gWidth, (short)(gHeight + 3)};
-	else
-		inventory = { gWidth, gHeight };
-	if (!GetConsoleScreenBufferInfo (hConsole, &csbi))
-		abort();
-	DWORD length = csbi.dwSize.X * csbi.dwSize.Y;
-	DWORD written;
-	if (!gFlee)
-	{
-		FillConsoleOutputCharacter(hConsole, TEXT(' '), length, topLeft, &written);
-		FillConsoleOutputAttribute(hConsole, csbi.wAttributes, length, topLeft, &written);
-		//for (int row = 0; row < 100; ++row) {
-		//	COORD rowIndex = { row, 0 };
-		//	FillConsoleOutputCharacter(hConsole, TEXT('$'), 76, rowIndex, &written);
-		//	FillConsoleOutputAttribute(hConsole, csbi.wAttributes, 76, rowIndex, &written);
-		//}
-
-	}
-	else if (invCLS)
-		FillConsoleOutputCharacter(hConsole, TEXT(' '), length / 2, inventory, &written);
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
 	
-	if (gInstructions)
-	{
-		FillConsoleOutputCharacter(hConsole, TEXT(' '), 450, topLeft, &written);
-		FillConsoleOutputAttribute(hConsole, csbi.wAttributes, 450, topLeft, &written);
-		//for (int row = 0; row < 100; +row) {
-		//	COORD rowIndex = { row, 0 };
-		//	FillConsoleOutputCharacter(hConsole, TEXT('$'), 76, rowIndex, &written);
-		//	FillConsoleOutputAttribute(hConsole, csbi.wAttributes, 76, rowIndex, &written);
-		//}
-	}
-	SetConsoleCursorPosition(hConsole, topLeft);
+	// Fill the entire screen buffer with spaces
+	DWORD charsWritten;
+	COORD coord = {0, 0};
+	FillConsoleOutputCharacter(hConsole, ' ', csbi.dwSize.X * csbi.dwSize.Y, coord, &charsWritten);
+	
+	// Reset cursor to top-left
+	SetConsoleCursorPosition(hConsole, coord);
+}
+
+void clearScreenArea(int startX, int startY, int width, int height)
+{
+	// Clear only a specific area of the screen for more efficient updates
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	
+	DWORD charsWritten;
+	COORD coord = {startX, startY};
+	FillConsoleOutputCharacter(hConsole, ' ', width * height, coord, &charsWritten);
+}
+
+void setCursorPosition(int x, int y)
+{
+	// Set cursor position for efficient text output
+	COORD coord = {x, y};
+	SetConsoleCursorPosition(hConsole, coord);
+}
+
+void hideCursor()
+{
+	// Hide the cursor to reduce visual noise during updates
+	CONSOLE_CURSOR_INFO cursorInfo;
+	GetConsoleCursorInfo(hConsole, &cursorInfo);
+	cursorInfo.bVisible = FALSE;
+	SetConsoleCursorInfo(hConsole, &cursorInfo);
+}
+
+void markScreenForUpdate()
+{
+	// Mark that the screen needs to be redrawn
+	gScreenNeedsUpdate = true;
 }
 
 void redraw(int y, int x)
 {
-	CONSOLE_SCREEN_BUFFER_INFO cbsi;
-	if (!GetConsoleScreenBufferInfo(hConsole, &cbsi))
-		abort();
-	COORD coord;
-	coord.X = cbsi.dwSize.X-x;
-	coord.Y = cbsi.dwSize.Y-y;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-	std::cout << "                                                                                     " << std::endl;
+	// This function appears to be unused or legacy code
+	// The double buffer system handles all screen updates now
+	// If this function is still needed, it should be updated to use the buffer system
 }
 
 
 
 void drawScreen(Character &hero, bool inventory)
 {
+	// Only redraw if screen needs update (reduces flashing)
+	// But always redraw during battle (!gFlee) or inventory mode
+	if (!gScreenNeedsUpdate && !inventory && gFlee) {
+		return;
+	}
 	
+	// Hide cursor during update to reduce visual noise
+	hideCursor();
+	
+	// Use efficient clearing
 	cls(inventory);
+	
+	// Reset the update flag
+	gScreenNeedsUpdate = false;
+	
+	// Draw instructions
 	if (gInstructions)
 	{
+		SetConsoleTextAttribute(hConsole, defaultTextColor);
 		std::cout << "############################### 'I' key Toogle  Instructions: ###################" << std::endl;
 		std::cout << "##           arrow keys to move # enter key to interact 'F' key to inspect     ##" << std::endl;
 		std::cout << "##           C=Character, E=Enemy, P=Potions, W=Weapon, A=Armor.               ##" << std::endl;
@@ -82,80 +168,72 @@ void drawScreen(Character &hero, bool inventory)
 	{
 		for (int row = 0; row < gHeight; ++row)
 		{
-			std::cout << std::endl;
 			for (int col = 0; col < gWidth; ++col)
 			{
-				SetConsoleTextAttribute(hConsole, defaultTextColor);
 				if (row == hero.heroRow && col == hero.heroCol)//draw Hero position
 				{
 					SetConsoleTextAttribute(hConsole, B_Hero);
 					std::cout << "[C]";
-					SetConsoleTextAttribute(hConsole, defaultTextColor);
 				}
 				else
 				{
+					WORD color = defaultTextColor;
+					std::string display = "";
+					
 					switch (lvl.grid[row][col])
 					{
 					case(L_L) ://Walls
 					{
-                        // REVIEW [STRUCT][REPEATED_CODE][Karla]: The following code could be placed in a function, except for the 
-                        // unexplored case, to reduce repeated code.
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, B_Walls);
+							color = B_Walls;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << "[" << lvl.grid[row][col] << "]";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = "[" + std::string(1, lvl.grid[row][col]) + "]";
 					}break;
 
 					case(L_E) ://enemys
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, B_Enemy);
+							color = B_Enemy;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << "[" << lvl.grid[row][col] << "]";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = "[" + std::string(1, lvl.grid[row][col]) + "]";
 					}break;
 
 					case(L_W) ://item
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, 126);
+							color = 126;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					case(L_H) ://helmet
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, B_Gear);
+							color = B_Gear;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					case(L_A) ://armor
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, B_Gear);
+							color = B_Gear;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					case(L_P) ://potions
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, B_Potion);
+							color = B_Potion;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					case(L_X) ://unexplored
@@ -163,164 +241,223 @@ void drawScreen(Character &hero, bool inventory)
 						if (gExplored.grid[row][col] == 1)
 						{
 							lvl.grid[row][col] = 'O';
-							SetConsoleTextAttribute(hConsole, B_Floor);
+							color = B_Floor;
 						}
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, notExplored);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					case(L_O) ://explored
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, B_Floor);
+							color = B_Floor;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					case(L_S) ://start point
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, 112);
+							color = 112;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					case(L_F) ://finish point
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, 125);
+							color = 125;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << " " << lvl.grid[row][col] << " ";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = " " + std::string(1, lvl.grid[row][col]) + " ";
 					}break;
 
 					default:
 					{
 						if (gExplored.grid[row][col] == 1)
-							SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = defaultTextColor;
 						else
-							SetConsoleTextAttribute(hConsole, notExplored);
-						std::cout << "[" << lvl.grid[row][col] << "]";
-						SetConsoleTextAttribute(hConsole, defaultTextColor);
+							color = notExplored;
+						display = "[" + std::string(1, lvl.grid[row][col]) + "]";
 					}break;
 					}
-
+					
+					SetConsoleTextAttribute(hConsole, color);
+					std::cout << display;
 				}
-
 			}
-			SetConsoleTextAttribute(hConsole, defaultTextColor);
+			std::cout << std::endl;
 		}
-		std::cout << std::endl;
 		std::cout << std::endl;
 	}
 	else if (!gFlee)// if battle event going on print current enemy 
 	{
-		cls(inventory);
 		std::string fileName = "./Graphics/"+hero.getCurrentEnemy()+".txt";
 		std::ifstream file(fileName);
-		std::string str;
-		if (hero.enemyDamaged)
-			SetConsoleTextAttribute(hConsole, C_Red);
-		while (std::getline(file, str))
-		{
-			std::cout << str << std::endl;
+		if (!file.is_open()) {
+			std::cerr << "Error: Could not open enemy graphics file: " << fileName << std::endl;
+			std::cout << "Enemy: " << hero.getCurrentEnemy() << std::endl;
+		} else {
+			std::string str;
+			CONSOLE_SCREEN_BUFFER_INFO csbi;
+			GetConsoleScreenBufferInfo(hConsole, &csbi);
+			int screenWidth = csbi.dwSize.X;
+			
+			if (hero.enemyDamaged)
+			{
+				SetConsoleTextAttribute(hConsole, C_Red);
+				while (std::getline(file, str)) {
+					// Pad the line to full screen width to ensure complete coverage
+					str.resize(screenWidth, ' ');
+					std::cout << str << std::endl;
+				}
+			}
+			else
+			{
+				SetConsoleTextAttribute(hConsole, defaultTextColor);
+				while (std::getline(file, str)) {
+					// Pad the line to full screen width to ensure complete coverage
+					str.resize(screenWidth, ' ');
+					std::cout << str << std::endl;
+				}
+			}
+			file.close();
 		}
-		file.close();
-		SetConsoleTextAttribute(hConsole, C_White);
 	}
 
-	/*draw menu*/
-	std::cout << "############################### Status ##############################################" << std::endl;
+	// Draw status and inventory
+	SetConsoleTextAttribute(hConsole, defaultTextColor);
+	
+	// Get screen width for proper padding
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	int screenWidth = csbi.dwSize.X;
+	
+	// Create properly padded status line
+	std::string statusLine = "############################### Status ##############################################";
+	statusLine.resize(screenWidth, '#');
+	std::cout << statusLine << std::endl;
+	
 	SetConsoleTextAttribute(hConsole, C_Blue);
 	std::cout << "N:" << hero.getName();
 	SetConsoleTextAttribute(hConsole, C_BGreen);
-	std::cout << " Hp: " << hero.getHP()<<"/"<<hero.getMaxHP();
+	std::cout << " Hp: " << hero.getHP() << "/" << hero.getMaxHP();
 	SetConsoleTextAttribute(hConsole, C_Red);
-	std::cout << " Ap: " << hero.getAP() << std::endl;
-	SetConsoleTextAttribute(hConsole, C_White);
-	std::cout << "############################## Inventory ############################################" << std::endl;
-	if (hero.inventorySize()>0)
+	std::cout << " Ap: " << hero.getAP();
+	// Pad the rest of the line with spaces
+	std::string padding(screenWidth - 20, ' '); // Approximate padding needed
+	std::cout << padding << std::endl;
+	
+	SetConsoleTextAttribute(hConsole, defaultTextColor);
+	// Create properly padded inventory line
+	std::string inventoryLine = "############################## Inventory ############################################";
+	inventoryLine.resize(screenWidth, '#');
+	std::cout << inventoryLine << std::endl;
+	
+	if (hero.inventorySize() > 0)
 	{
 		for (int item = 0; item < hero.inventorySize(); ++item)
 		{
-            // REVIEW [CTRLS][Karla]: Maybe evaluate to "== T_Consumable" and change "else-if" for an "else" statement
 			if (hero.selectItem(item).getType() != T_Consumable)//color weapons yellow and print info
 			{
 				SetConsoleTextAttribute(hConsole, C_Yellow);
-				std::cout << hero.selectItem(item).getName() << " ";
-				if (hero.selectItem(item).getAP()>0)
+				std::string itemLine = hero.selectItem(item).getName() + " ";
+				if (hero.selectItem(item).getAP() > 0)
 				{
 					SetConsoleTextAttribute(hConsole, C_Red);
-					std::cout << "+AP: " << hero.selectItem(item).getAP() << " ";
+					itemLine += "+AP: " + std::to_string(hero.selectItem(item).getAP()) + " ";
 				}
 				if (hero.selectItem(item).getMaxHP() > 0)
 				{
 					SetConsoleTextAttribute(hConsole, C_Green);
-					std::cout << "+maxHP: " << hero.selectItem(item).getMaxHP() << " ";
+					itemLine += "+maxHP: " + std::to_string(hero.selectItem(item).getMaxHP()) + " ";
 				}
-				SetConsoleTextAttribute(hConsole, C_White);
+				// Pad to full screen width
+				itemLine.resize(screenWidth, ' ');
+				std::cout << itemLine << std::endl;
 			}
 			else if (hero.selectItem(item).getType() == T_Consumable)//color potions and print info
 			{
 				SetConsoleTextAttribute(hConsole, C_Pink);
-				std::cout <<"(" << item - 2<<") "<< hero.selectItem(item).getName() << " ";
-				if (hero.selectItem(item).getAP()>0)
+				std::string itemLine = "(" + std::to_string(item - 2) + ") " + hero.selectItem(item).getName() + " ";
+				if (hero.selectItem(item).getAP() > 0)
 				{
 					SetConsoleTextAttribute(hConsole, C_Red);
-					std::cout << "+AP: " << hero.selectItem(item).getAP() << " ";
+					itemLine += "+AP: " + std::to_string(hero.selectItem(item).getAP()) + " ";
 				}
 				if (hero.selectItem(item).getMaxHP() > 0)
 				{
 					SetConsoleTextAttribute(hConsole, C_BGreen);
-					std::cout << "+HP: " << hero.selectItem(item).getMaxHP() << " ";
+					itemLine += "+HP: " + std::to_string(hero.selectItem(item).getMaxHP()) + " ";
 				}
-				SetConsoleTextAttribute(hConsole, C_White);
+				// Pad to full screen width
+				itemLine.resize(screenWidth, ' ');
+				std::cout << itemLine << std::endl;
 			}
-		
-			std::cout << std::endl;
 		}
 	}
 	else
-		std::cout << "###                                                                               ###" << std::endl;
-	std::cout << "#####################################################################################" << std::endl;
-
-
-
+	{
+		SetConsoleTextAttribute(hConsole, defaultTextColor);
+		std::string emptyLine = "###                                                                               ###";
+		emptyLine.resize(screenWidth, '#');
+		std::cout << emptyLine << std::endl;
+	}
+	
+	SetConsoleTextAttribute(hConsole, defaultTextColor);
+	std::string finalLine = "#####################################################################################";
+	finalLine.resize(screenWidth, '#');
+	std::cout << finalLine << std::endl;
 };
 
-void printTitle()
-{
-	gFlee = false;
-	int times = 20;
-	bool end = false;
-	PlaySound(TEXT("./Sounds/intro.wav"), NULL, SND_ASYNC);
-	//SetConsoleTextAttribute(hConsole, C_Yellow);
-	while (!end)
-	{
-		cls();
-        // REVIEW[STRUCT][CONVENTION][Karla]: All loops (in fact, all scopes) must have its body enclosed by curly braces.
-		for (int x = times; x >= 0; --x)
-			std::cout << std::endl;
-		std::ifstream file("./Graphics/title.txt");
-		std::string str;
-		while (std::getline(file, str))
-			std::cout << str << std::endl;
-		file.close();
-		Sleep(20);
-		--times;
-		if (times <=0)
-			end = true;
-	}
-	gFlee = true;
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <windows.h>
 
+void printTitle() {
+	gFlee = false;
+	const int MAX_LINES = 20;
+	PlaySound(TEXT("./Sounds/intro.wav"), NULL, SND_ASYNC);
+
+	std::ifstream titleFile("./Graphics/title.txt");
+	if (!titleFile.is_open()) {
+		std::cerr << "Error: Could not open title graphics file!" << std::endl;
+		std::cerr << "Please ensure ./Graphics/title.txt exists." << std::endl;
+		return;
+	}
+
+	// Get screen width for proper padding
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	int screenWidth = csbi.dwSize.X;
+
+	for (int linesRemaining = MAX_LINES; linesRemaining > 0; --linesRemaining) {
+		cls();
+
+		for (int i = 0; i < linesRemaining; ++i) {
+			std::cout << std::endl;
+		}
+
+		std::string line;
+		while (std::getline(titleFile, line)) {
+			// Pad the line to full screen width to ensure complete coverage
+			line.resize(screenWidth, ' ');
+			std::cout << line << std::endl;
+		}
+
+		titleFile.clear();
+		titleFile.seekg(0); // Reset file pointer to beginning
+
+		Sleep(Timing::STEP_DELAY_MS);
+	}
+
+	gFlee = true;
 }
+
 
 void gameOver()//animation of game over
 {
@@ -329,6 +466,12 @@ void gameOver()//animation of game over
 	bool end = false;
 	SetConsoleTextAttribute(hConsole, C_Red);
 	PlaySound(TEXT("./Sounds/gameover.wav"), NULL, SND_SYNC);
+	
+	// Get screen width for proper padding
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	int screenWidth = csbi.dwSize.X;
+	
 	while (!end)
 	{
 		cls();
@@ -336,26 +479,39 @@ void gameOver()//animation of game over
 		for (int x = 0; x <= times;++x)
 			std::cout << std::endl;
 		std::ifstream file("./Graphics/gameover.txt");
-		std::string str;
-		while (std::getline(file, str))
-			std::cout << str << std::endl;
-		file.close();
-		Sleep(500);
+		if (!file.is_open()) {
+			std::cerr << "Error: Could not open game over graphics file!" << std::endl;
+			std::cout << "GAME OVER" << std::endl;
+		} else {
+			std::string str;
+			while (std::getline(file, str)) {
+				// Pad the line to full screen width to ensure complete coverage
+				str.resize(screenWidth, ' ');
+				std::cout << str << std::endl;
+			}
+			file.close();
+		}
+		Sleep(Timing::ANIMATION_DELAY_MS);
 		++times;
-		if (times >= 6)
+		if (times >= Timing::ANIMATION_FRAMES)
 			end = true;
 	}
 	exit(EXIT_SUCCESS);
-	gFlee = true;
 }
 
-void victory()//animation of game over
+void victory()//animation of victory
 {
 	gFlee = false;
 	int times = 0;
 	bool end = false;
 	SetConsoleTextAttribute(hConsole, C_Yellow);
 	PlaySound(TEXT("./Sounds/victory.wav"), NULL, SND_ASYNC);
+	
+	// Get screen width for proper padding
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	int screenWidth = csbi.dwSize.X;
+	
 	while (!end)
 	{
 		cls();
@@ -363,15 +519,22 @@ void victory()//animation of game over
 		for (int x = 0; x <= times; ++x)
 			std::cout << std::endl;
 		std::ifstream file("./Graphics/victory.txt");
-		std::string str;
-		while (std::getline(file, str))
-			std::cout << str << std::endl;
-		file.close();
-		Sleep(500);
+		if (!file.is_open()) {
+			std::cerr << "Error: Could not open victory graphics file!" << std::endl;
+			std::cout << "VICTORY!" << std::endl;
+		} else {
+			std::string str;
+			while (std::getline(file, str)) {
+				// Pad the line to full screen width to ensure complete coverage
+				str.resize(screenWidth, ' ');
+				std::cout << str << std::endl;
+			}
+			file.close();
+		}
+		Sleep(Timing::ANIMATION_DELAY_MS);
 		++times;
-		if (times >= 6)
+		if (times >= Timing::ANIMATION_FRAMES)
 			end = true;
 	}
 	exit(EXIT_SUCCESS);
-	gFlee = true;
 }

@@ -1,6 +1,7 @@
 #include "Equipment.h"
 #include "Helmet.h"
 #include "common.h"
+#include "Constants.h"
 #include "graphics.h"
 #include <iostream>
 #include <string>
@@ -12,9 +13,9 @@ Helmet::Helmet(std::string name, int ap, int maxhp, bool fixed) : Equipment(name
 	mType = T_Head;
 	if (!fixed)	//increase AP & maxHP based on type and rarity
 	{
-		mMaxHP = mMaxHP + ((randomValue * 1) + (5 * (randomValue / 4)));
+		mMaxHP = mMaxHP + ((mRandomValue * 1) + (5 * (mRandomValue / 4)));
 		if (!(mRarity == "common"))
-			mAP = mAP + (2 * randomValue / 6);
+			mAP = mAP + (2 * mRandomValue / 6);
 	}
 };
 
@@ -32,7 +33,7 @@ void Helmet::pickHelmet(Helmet *current, Character &hero, int code)
 		std::cout << "Helmet taken" << std::endl;
 		hero.addToInventory(*current);
 		lvl.grid[hero.heroRow][hero.heroCol] = 'O';
-		Sleep(500);
+		Sleep(Timing::UI_DELAY_MS);
 		drawScreen(hero, true);
 	}
 }

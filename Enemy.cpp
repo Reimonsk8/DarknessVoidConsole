@@ -1,7 +1,7 @@
 #include "Enemy.h"
 #include "common.h"
+#include "Constants.h"
 #include "graphics.h"
-#include "Enemy.h"
 #include <string>
 #include <iostream>
 #include <Windows.h>
@@ -33,7 +33,7 @@ int Enemy::getAP()
 
 bool Enemy::tryFlee()
 {
-	int random_value = rand() % 13 + 1;
+	int random_value = rand() % Random::FLEE_CHANCE_MAX + 1;
 	if (random_value > mFlee)
 		return true;
 	else return false;
@@ -46,7 +46,7 @@ void Enemy::heroAtacked(Character &hero, Enemy *current)
 		std::cout << "Enemy " << current->getName() << " atacked you dealing ";
 		SetConsoleTextAttribute(hConsole, C_Red);
 		std::cout << current->getAP();
-		hero.setHP(-current->getAP());//deal damage to player 
+		hero.setHP(-current->getAP());//deal damage to player (subtract HP) 
 		SetConsoleTextAttribute(hConsole, C_White);
 		std::cout << " damage, now you have ";
 		SetConsoleTextAttribute(hConsole, C_Green);
@@ -58,7 +58,7 @@ void Enemy::heroAtacked(Character &hero, Enemy *current)
 		{
 			PlaySound(TEXT("./Sounds/death.wav"), NULL, SND_SYNC);
 			std::cout << "YOU DIED!!! \n your body lies in a pool of blood while the enemy eat's your bones and flesh...";
-			Sleep(1000);
+			Sleep(Timing::SOUND_DELAY_MS);
 			gameOver();
 		}
 }
@@ -66,6 +66,7 @@ void Enemy::heroAtacked(Character &hero, Enemy *current)
 void Enemy::enemyAtacked(Character &hero, Enemy *current)
 {
 	hero.enemyDamaged = true;
+	markScreenForUpdate(); // Force screen update to show damaged enemy graphic
 	drawScreen(hero);
 	std::cout << "you atacked " << current->getName() << " using your" << std::endl;
 	SetConsoleTextAttribute(hConsole, C_Yellow);
@@ -80,7 +81,7 @@ void Enemy::enemyAtacked(Character &hero, Enemy *current)
 	std::cout << current->getHP();
 	SetConsoleTextAttribute(hConsole, C_White);
 	std::cout << " Health left" << std::endl;
-	Sleep(1000);
+	Sleep(Timing::SOUND_DELAY_MS);
 	if (current->getHP() <= 0)
 	{
 		PlaySound(TEXT("./Sounds/win.wav"), NULL, SND_SYNC);
@@ -88,9 +89,10 @@ void Enemy::enemyAtacked(Character &hero, Enemy *current)
 		lvl.grid[hero.heroRow][hero.heroCol] = 'O';//remove enemy
 		current->posX = OUT_OF_RANGE;
 		current->posY = OUT_OF_RANGE;
-		Sleep(1000);//system("pause");
+		Sleep(Timing::SOUND_DELAY_MS);//system("pause");
 		hero.enemyDamaged = false;
 		gFlee = true;
+		markScreenForUpdate(); // Force screen update to return to map view
 		//delete current;
 	}
 	else
